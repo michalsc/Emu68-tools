@@ -385,11 +385,20 @@ APTR Init(struct ExecBase *SysBase asm("a6"))
                     }
                     EMMCBase->emmc_Buffer = buff;
                     EMMCBase->emmc_BlocksToTransfer = 1;
-                    emmc_cmd(SEND_EXT_CSD, 0, 500000, EMMCBase);
+
+                    if (EMMCBase->emmc_isMicroSD)
+                    {
+                        emmc_cmd(DESELECT_CARD, 0, 1000000, EMMCBase);
+                        emmc_cmd(SEND_CSD, EMMCBase->emmc_CardRCA << 16, 1000000, EMMCBase);
+                    }
+                    else
+                    {
+                        emmc_cmd(SEND_EXT_CSD, 0, 500000, EMMCBase);
+                    }
 
                     if(!FAIL(EMMCBase))
                     {
-                        ULONG block_count = LE32(*(ULONG*)(APTR)&buff[212]);
+                        ULONG block_count = EMMCBase->emmc_isMicroSD ? 1024 * ((EMMCBase->emmc_Res1 >> 8) & 0x3fffff) + 1024 : LE32(*(ULONG*)(APTR)&buff[212]);
                         EMMCBase->emmc_UnitCount = 1;
                         EMMCBase->emmc_Units[0] = AllocMem(sizeof(struct EMMCUnit), MEMF_PUBLIC | MEMF_CLEAR);
                         EMMCBase->emmc_Units[0]->su_StartBlock = 0;

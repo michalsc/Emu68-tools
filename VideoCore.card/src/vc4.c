@@ -843,3 +843,18 @@ void WaitVerticalSync (__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle)) {
     // Wait until current vbeampos is lower than the one obtained above
     do { asm volatile("nop"); } while((LE32(*stat) & 0xfff) != VC4Base->vc4_DispSize.height);
 }
+
+BOOL GetVSyncState(__REGA0(struct BoardInfo *b), __REGD0(BOOL expected))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    volatile ULONG *stat = (ULONG*)(0xf2400000 + SCALER_DISPSTAT1);
+    
+    // Ignore expected value
+    (void)expected;
+
+    // If picture is in visible area, then return 0, if in vblank return 1
+    if ((LE32(*stat) & 0xfff) != VC4Base->vc4_DispSize.height)
+        return 0;
+    else
+        return 1;
+}

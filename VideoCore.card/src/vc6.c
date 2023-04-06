@@ -8,6 +8,7 @@
 #include "vc6.h"
 #include "boardinfo.h"
 #include "mbox.h"
+#include "vpu.h"
 
 UWORD VC6_CalculateBytesPerRow(struct BoardInfo *b asm("a0"), UWORD width asm("d0"), RGBFTYPE format asm("d7"))
 {
@@ -130,6 +131,27 @@ static const ULONG mode_table[] = {
     [RGBFB_B5G5R5PC] = VC6_CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB555) | VC6_CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XBGR),
 
     [RGBFB_CLUT] = VC6_CONTROL_FORMAT(HVS_PIXEL_FORMAT_PALETTE) | VC6_CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XBGR)
+};
+
+static const UBYTE bpp_table[] = {
+    [RGBFB_A8R8G8B8] = 4,
+    [RGBFB_A8B8G8R8] = 4,
+    [RGBFB_B8G8R8A8] = 4,
+    [RGBFB_R8G8B8A8] = 4,
+
+    [RGBFB_R8G8B8] = 3,
+    [RGBFB_B8G8R8] = 3,
+
+    [RGBFB_R5G6B5PC] = 2,
+    [RGBFB_R5G5B5PC] = 2,
+    
+    [RGBFB_R5G6B5] = 2,
+    [RGBFB_R5G5B5] = 2,
+    
+    [RGBFB_B5G6R5PC] = 2,
+    [RGBFB_B5G5R5PC] = 2,
+
+    [RGBFB_CLUT] = 1
 };
 
 int VC6_AllocSlot(UWORD size, struct VC4Base *VC4Base)
@@ -559,8 +581,10 @@ UWORD VC6_SetDisplay (__REGA0(struct BoardInfo *b), __REGD0(UWORD enabled))
 {
     struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
     struct ExecBase *SysBase = VC4Base->vc4_SysBase;
-    
-    if (1)
+
+    (void)enabled;
+#if 0
+    if (0)
     {
         bug("[VC4] SetDisplay %ld\n", enabled);
     }
@@ -569,7 +593,7 @@ UWORD VC6_SetDisplay (__REGA0(struct BoardInfo *b), __REGD0(UWORD enabled))
     } else {
         blank_screen(1, VC4Base);
     }
-
+#endif
     return 1;
 }
 
@@ -777,10 +801,193 @@ ULONG VC6_GetVBeamPos(struct BoardInfo *b asm("a0"))
     return vbeampos;
 }
 
-void VC6_WaitVerticalSync (__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle)) {
+void VC6_WaitVerticalSync (__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle))
+{
     struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
     volatile ULONG *stat = (ULONG*)(0xf2400000 + SCALER_DISPSTAT1);
 
-    // Wait until current vbeampos is lower than the one obtained above
+    // If in vblank already, then wait for vblank to end
+    if ((LE32(*stat) & 0xfff) >= VC4Base->vc4_DispSize.height)
+    {
+        do { asm volatile("nop"); } while((LE32(*stat) & 0xfff) < VC4Base->vc4_DispSize.height);
+    }
+
+    // Wait until vbeampos is in vblank area
     do { asm volatile("nop"); } while((LE32(*stat) & 0xfff) != VC4Base->vc4_DispSize.height);
+}
+
+BOOL VC6_GetVSyncState(__REGA0(struct BoardInfo *b), __REGD0(BOOL expected))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    volatile ULONG *stat = (ULONG*)(0xf2400000 + SCALER_DISPSTAT1);
+    
+    // Ignore expected value
+    (void)expected;
+
+    // If picture is in visible area, then return 0, if in vblank return 1
+    if ((LE32(*stat) & 0xfff) < VC4Base->vc4_DispSize.height)
+        return 0;
+    else
+        return 1;
+}
+
+/* WaitBlitter - wait for the 2D acceleration to complete */
+void VC6_WaitBlitter(struct BoardInfo *b asm("a0"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+
+    // Do nto wait now, no blitter yet
+    (void)VC4Base;
+}
+
+/* BlitPlanar2Chunky - convert a planar bitmap to indexed color */
+void VC6_BlitPlanar2Chunky(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct BitMap *bm),
+        __REGA2(struct RenderInfo *r),
+        __REGD0(SHORT x), __REGD1(SHORT y),
+        __REGD2(SHORT dx), __REGD3(SHORT dy),
+        __REGD4(SHORT w), __REGD5(SHORT h),
+        __REGD6(UBYTE minterm),
+        __REGD7(UBYTE mask))
+{
+    //bug("[VC6] BlitPlanar2Chunky\n");
+    b->BlitPlanar2ChunkyDefault(b, bm, r, x, y, dx, dy, w, h, minterm, mask);
+}
+
+/* FillRect - fill a rectangle with a solid color */
+void VC6_FillRect(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct RenderInfo *r),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD w), __REGD3(WORD h),
+        __REGD4(ULONG color),
+        __REGD5(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] FillRect(bitmap @ %08lx, stride %ld, %ld:%ld, %ldx%ld, %08lx, %02lx, %ld)\n", r->Memory, r->BytesPerRow, x, y, w, h, color, mask, format);
+    b->FillRectDefault(b, r, x, y, w, h, color, mask, format);
+}
+
+/* InvertRect - invert a rectangle */
+void VC6_InvertRect(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct RenderInfo *r),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD w), __REGD3(WORD h),
+        __REGD4(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] InvertRect\n");
+    b->InvertRectDefault(b, r, x, y, w, h, mask, format);
+}
+
+/* BlitRect - copy a rectangular region through a mask */
+void VC6_BlitRect(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct RenderInfo *r),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD dx), __REGD3(WORD dy),
+        __REGD4(WORD w), __REGD5(WORD h),
+        __REGD6(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    ULONG bpp = bpp_table[format];
+    ULONG stride = r->BytesPerRow;
+    ULONG src = 0xc0000000 + (ULONG)r->Memory + y * stride + x * bpp;
+    ULONG dst = 0xc0000000 + (ULONG)r->Memory + dy * stride + dx * bpp;
+    ULONG height = h;
+    ULONG width = w * bpp;
+
+    if ((ULONG)r->Memory < 0x01000000 || (ULONG)r->Memory >= 0x40000000)
+    {
+        bug("[VC6] BlitRect(bitmap @ %08lx, stride %ld, %ld:%ld -> %ld:%ld, %ldx%ld, %02lx, %ld)\n",
+            r->Memory, r->BytesPerRow, x, y, dx, dy, w, h, mask, format);
+
+        bug("[VC6] Calling default function\n");
+        b->BlitRectDefault(b, r, x, y, dx, dy, w, h, mask, format);
+        return;
+    }
+
+
+    if (mask != 0xff || VPU_RectCopy((APTR)src, (APTR)dst, width, height, stride - width, stride - width, VC4Base) == 0)
+    {
+        bug("[VC6] BlitRect(bitmap @ %08lx, stride %ld, %ld:%ld -> %ld:%ld, %ldx%ld, %02lx, %ld)\n",
+            r->Memory, r->BytesPerRow, x, y, dx, dy, w, h, mask, format);
+
+        bug("[VC6] Calling default BlitRect function\n");
+        b->BlitRectDefault(b, r, x, y, dx, dy, w, h, mask, format);
+    }
+}
+
+/* BlitTemplate - expands a single bitplane to color values */
+void VC6_BlitTemplate(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct RenderInfo *r),
+        __REGA2(struct Template *t),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD w), __REGD3(WORD h),
+        __REGD4(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] BlitTemplate\n");
+    b->BlitTemplateDefault(b, r, t, x, y, w, h, mask, format);
+}
+
+/* BlitPattern - fills a rectangle with a pattern */
+void VC6_BlitPattern(
+        __REGA0(struct BoardInfo *b),
+        __REGA1(struct RenderInfo *r),
+        __REGA2(struct Pattern *p),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD w), __REGD3(WORD h),
+        __REGD4(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] BlitPattern\n");
+    b->BlitPatternDefault(b, r, p, x, y, w, h, mask, format);
+}
+
+/* DrawLine - draws a line */
+void VC6_DrawLine(
+        __REGA0(struct BoardInfo *bi),
+        __REGA1(struct RenderInfo *r),
+        __REGA2(struct Line *l),
+        __REGD0(UBYTE mask),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] DrawLine\n");
+    bi->DrawLineDefault(bi, r, l, mask, format);
+}
+
+/* BlitRectNoMaskComplete - copy a rectangle by a minterm, whihtout a mask */
+void VC6_BlitRectNoMaskComplete(
+        __REGA0(struct BoardInfo *bi),
+        __REGA1(struct RenderInfo *rs),
+        __REGA2(struct RenderInfo *rt),
+        __REGD0(WORD x), __REGD1(WORD y),
+        __REGD2(WORD dx), __REGD3(WORD dy),
+        __REGD4(WORD w), __REGD5(WORD h),
+        __REGD6(UBYTE minterm),
+        __REGD7(RGBFTYPE format))
+{
+    //bug("[VC6] BlitRectNoMaskComplete\n");
+    bi->BlitRectNoMaskCompleteDefault(bi, rs, rt, x, y, dx, dy, w, h, minterm, format);
+}
+
+/* BlitPlanar2Direct - convert a planar bitmap to direct color */
+void VC6_BlitPlanar2Direct(
+        __REGA0(struct BoardInfo *bi),
+        __REGA1(struct BitMap *bm),
+        __REGA2(struct RenderInfo *ri),
+        __REGA3(struct ColorIndexMapping *clut),
+        __REGD0(SHORT x), __REGD1(SHORT y),
+        __REGD2(SHORT dx), __REGD3(SHORT dy),
+        __REGD4(SHORT w), __REGD5(SHORT h),
+        __REGD6(UBYTE minterm),
+        __REGD7(UBYTE mask))
+{
+//    bug("[VC6] BlitPlanar2Direct\n");
+    bi->BlitPlanar2DirectDefault(bi, bm, ri, clut, x, y, dx, dy, w, h, minterm, mask);
 }

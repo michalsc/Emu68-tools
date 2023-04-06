@@ -67,6 +67,8 @@ static void mbox_send(uint32_t channel, uint32_t data, struct VC4Base * VC4Base)
 	volatile uint32_t *mbox_status = (uint32_t*)((uintptr_t)VC4Base->vc4_MailBox + 0x18);
 	uint32_t status;
 
+    data += 0xc0000000;
+
 	data &= ~MBOX_CHANMASK;
 	data |= channel & MBOX_CHANMASK;
 
@@ -256,6 +258,7 @@ void release_framebuffer(struct VC4Base *VC4Base)
 {
     struct ExecBase *SysBase = VC4Base->vc4_SysBase;
     ULONG *FBReq = VC4Base->vc4_Request;
+    ULONG len = 6*4;
 
     /* Release framebuffer */
     FBReq[0] = LE32(4*6);
@@ -265,9 +268,10 @@ void release_framebuffer(struct VC4Base *VC4Base)
     FBReq[4] = 0;
     FBReq[5] = 0;
 
-    CacheClearE(FBReq, 4*6, CACRF_ClearD);
+    CachePreDMA(FBReq, &len, 0);
     mbox_send(8, (ULONG)FBReq, VC4Base);
     mbox_recv(8, VC4Base);
+    CachePostDMA(FBReq, &len, 0);
 }
 
 uint32_t upload_code(const void * code, uint32_t code_size, struct VC4Base *VC4Base)
@@ -277,6 +281,9 @@ uint32_t upload_code(const void * code, uint32_t code_size, struct VC4Base *VC4B
     ULONG handle;
     ULONG phys_addr;
     UBYTE *ptr;
+    ULONG len;
+
+    bug("[VC] upload_code(%08lx, %ld)\n", (ULONG)code, code_size);
 
     /* Allocate buffer for the code on VC4 */
     FBReq[0] = LE32(4*9);
@@ -289,11 +296,22 @@ uint32_t upload_code(const void * code, uint32_t code_size, struct VC4Base *VC4B
     FBReq[7] = LE32((3 << 2) | (1 << 6));   // COHERENT | DIRECT | HINT_PERMALOCK
     FBReq[8] = 0;
 
-    CacheClearE(FBReq, 4*9, CACRF_ClearD);
-    mbox_send(8, (ULONG)FBReq, VC4Base);
-    mbox_recv(8, VC4Base);
+    len = 4*9;
+    do {
+        CachePreDMA(FBReq, &len, 0);
+        mbox_send(8, (ULONG)FBReq, VC4Base);
+        mbox_recv(8, VC4Base);
+        CachePostDMA(FBReq, &len, 0);
+    } while((FBReq[1] & LE32(0x80000000)) == 0);
+
+    for (int i=0; i < 9; i++)
+    {
+        bug("FBReq[%ld] = %08lx\n", i, LE32(FBReq[i]));
+    }
 
     handle = LE32(FBReq[5]);
+
+    bug("[VC] got handle %ld\n", handle);
 
     /* Lock the block so that it remains alive all the time */
     FBReq[0] = LE32(4*7);
@@ -304,12 +322,46 @@ uint32_t upload_code(const void * code, uint32_t code_size, struct VC4Base *VC4B
     FBReq[5] = LE32(handle);  // 32 bytes
     FBReq[6] = 0;
 
-    CacheClearE(FBReq, 4*9, CACRF_ClearD);
-    mbox_send(8, (ULONG)FBReq, VC4Base);
-    mbox_recv(8, VC4Base);
+    int cnt = 10;
+    do {
+        len = 4*7;
+
+    FBReq[0] = LE32(4*7);
+    FBReq[1] = 0;
+    FBReq[2] = LE32(0x0003000d);
+    FBReq[3] = LE32(4);
+    FBReq[4] = 0;
+    FBReq[5] = LE32(handle);  // 32 bytes
+    FBReq[6] = 0;
+
+    bug("before sending\n");
+    for (int i=0; i < 7; i++)
+    {
+        bug("FBReq[%ld] = %08lx\n", i, LE32(FBReq[i]));
+    }
+
+        CachePreDMA(FBReq, &len, 0);
+        mbox_send(8, (ULONG)FBReq, VC4Base);
+        mbox_recv(8, VC4Base);
+        CachePostDMA(FBReq, &len, 0);
+
+    bug("after sending\n");
+    for (int i=0; i < 7; i++)
+    {
+        bug("FBReq[%ld] = %08lx\n", i, LE32(FBReq[i]));
+    }
+
+    } while((FBReq[1] & LE32(0x80000000)) == 0 && --cnt != 0);
+
+    for (int i=0; i < 7; i++)
+    {
+        bug("FBReq[%ld] = %08lx\n", i, LE32(FBReq[i]));
+    }
 
     /* Get physical address. This is in VPU's view! */
     phys_addr = LE32(FBReq[5]);
+
+    bug("[VC] physical address %08lx\n", phys_addr);
 
     /* Convert address to CPU view, upload code there */
     ptr = (UBYTE *)(phys_addr & 0x3fffffff);
@@ -322,4 +374,35 @@ uint32_t upload_code(const void * code, uint32_t code_size, struct VC4Base *VC4B
 
     /* Return back physical address */
     return phys_addr;
+}
+
+void call_code(uint32_t addr, uint32_t arg0, uint32_t arg1, uint32_t arg2, uint32_t arg3,
+               uint32_t arg4, uint32_t arg5, struct VC4Base *VC4Base)
+{
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+    ULONG *FBReq = VC4Base->vc4_Request;
+    int c = 1;
+    ULONG len;
+
+    FBReq[c++] = 0;
+    FBReq[c++] = LE32(0x00030010);
+    FBReq[c++] = LE32(28);
+    FBReq[c++] = 0;
+    FBReq[c++] = LE32(addr); // code address
+    FBReq[c++] = LE32(arg0); // r0
+    FBReq[c++] = LE32(arg1); // r1 dest address
+    FBReq[c++] = LE32(arg2); // r2 Number of 256-byte packets
+    FBReq[c++] = LE32(arg3); // r3
+    FBReq[c++] = LE32(arg4); // r4
+    FBReq[c++] = LE32(arg5); // r5
+
+    len = 4*c;
+
+    FBReq[c++] = 0;
+    FBReq[0] = LE32(len);
+    
+    CachePreDMA(FBReq, &len, 0);
+    mbox_send(8, (ULONG)FBReq, VC4Base);
+    mbox_recv(8, VC4Base);
+    CachePostDMA(FBReq, &len, 0);
 }

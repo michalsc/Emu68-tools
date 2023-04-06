@@ -47,8 +47,6 @@ struct VC4Base {
 
     struct Size             vc4_DispSize;
 
-    APTR                    vc4_VPU_CopyBlock;
-
     int                     vc4_ActivePlane;
     int                     vc4_FreePlane;
 
@@ -91,6 +89,10 @@ struct VC4Base {
     }                       vc4_LastPanning;
     
     UBYTE *                 vc4_SpriteShape;
+
+    ULONG                   vc4_VPUCopyBlock;
+    ULONG                   vc4_VPUCopyRect;
+    ULONG                   vc4_VPUCopyRectRev;
 };
 
 void bug(const char * restrict format, ...);

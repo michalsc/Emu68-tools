@@ -20,7 +20,6 @@
 #include "boardinfo.h"
 #include "emu68-vc4.h"
 #include "mbox.h"
-#include "vpu/block_copy.h"
 #include "support.h"
 #include "vc4.h"
 #include "vc6.h"
@@ -444,7 +443,7 @@ static int InitCard(struct BoardInfo* bi asm("a0"), const char **ToolTypes asm("
     bi->PaletteChipType = PCT_S3ViRGE;
     bi->GraphicsControllerType = GCT_S3ViRGE;
 
-    bi->Flags |= BIF_GRANTDIRECTACCESS | BIF_FLICKERFIXER | BIF_HARDWARESPRITE; // | BIF_BLITTER;
+    bi->Flags |= BIF_GRANTDIRECTACCESS | BIF_FLICKERFIXER | BIF_HARDWARESPRITE | BIF_BLITTER;
     bi->RGBFormats = 
         RGBFF_TRUEALPHA | 
         RGBFF_TRUECOLOR | 
@@ -490,28 +489,28 @@ static int InitCard(struct BoardInfo* bi asm("a0"), const char **ToolTypes asm("
         // Additional functions for "blitter" acceleration and vblank handling
         //bi->SetInterrupt = (void *)NULL;
 
-        //bi->WaitBlitter = (void *)NULL;
+        bi->WaitBlitter = (void *)VC6_WaitBlitter;
 
         //bi->ScrollPlanar = (void *)NULL;
         //bi->UpdatePlanar = (void *)NULL;
 
-        //bi->BlitPlanar2Chunky = (void *)BlitPlanar2Chunky;
-        //bi->BlitPlanar2Direct = (void *)BlitPlanar2Direct;
+        bi->BlitPlanar2Chunky = (void *)VC6_BlitPlanar2Chunky;
+        bi->BlitPlanar2Direct = (void *)VC6_BlitPlanar2Direct;
 
-        //bi->FillRect = (void *)FillRect;
-        //bi->InvertRect = (void *)InvertRect;
-        //bi->BlitRect = (void *)BlitRect;
-        //bi->BlitTemplate = (void *)BlitTemplate;
-        //bi->BlitPattern = (void *)BlitPattern;
-        //bi->DrawLine = (void *)DrawLine;
-        //bi->BlitRectNoMaskComplete = (void *)BlitRectNoMaskComplete;
+        bi->FillRect = (void *)VC6_FillRect;
+        bi->InvertRect = (void *)VC6_InvertRect;
+        bi->BlitRect = (void *)VC6_BlitRect;
+        bi->BlitTemplate = (void *)VC6_BlitTemplate;
+        bi->BlitPattern = (void *)VC6_BlitPattern;
+        bi->DrawLine = (void *)VC6_DrawLine;
+        bi->BlitRectNoMaskComplete = (void *)VC6_BlitRectNoMaskComplete;
         //bi->EnableSoftSprite = (void *)NULL;
 
         //bi->AllocCardMemAbs = (void *)NULL;
         //bi->SetSplitPosition = (void *)NULL;
         //bi->ReInitMemory = (void *)NULL;
         //bi->WriteYUVRect = (void *)NULL;
-        //bi->GetVSyncState = (void *)GetVSyncState;
+        bi->GetVSyncState = (void *)VC6_GetVSyncState;
         bi->GetVBeamPos = (void *)VC6_GetVBeamPos;
         //bi->SetDPMSLevel = (void *)NULL;
         //bi->ResetChip = (void *)NULL;
@@ -577,7 +576,7 @@ static int InitCard(struct BoardInfo* bi asm("a0"), const char **ToolTypes asm("
         //bi->SetSplitPosition = (void *)NULL;
         //bi->ReInitMemory = (void *)NULL;
         //bi->WriteYUVRect = (void *)NULL;
-        //bi->GetVSyncState = (void *)GetVSyncState;
+        bi->GetVSyncState = (void *)GetVSyncState;
         bi->GetVBeamPos = (void *)GetVBeamPos;
         //bi->SetDPMSLevel = (void *)NULL;
         //bi->ResetChip = (void *)NULL;

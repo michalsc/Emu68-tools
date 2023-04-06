@@ -81,6 +81,7 @@ struct EMMCBase {
     UBYTE               emmc_HideUnit0;
     UBYTE               emmc_ReadOnlyUnit0;
     UBYTE               emmc_Verbose;
+    UBYTE               emmc_isMicroSD;
 
     struct Interrupt    emmc_Interrupt;
 };
@@ -256,6 +257,7 @@ void UnitTask();
 #define CMD_4               (SD_CMD_INDEX(4))
 #define CMD_5               (SD_CMD_INDEX(5) | SD_RESP_R4)
 #define CMD_6               (SD_CMD_INDEX(6) | SD_RESP_R1b)
+#define CMD_6_SD            (SD_CMD_INDEX(6) | SD_RESP_R1 | SD_DATA_READ)
 #define CMD_7               (SD_CMD_INDEX(7) | SD_RESP_R1b)
 #define CMD_7nr             (SD_CMD_INDEX(7))
 #define CMD_8               (SD_CMD_INDEX(8) | SD_RESP_R7)
@@ -291,6 +293,7 @@ void UnitTask();
 #define SEND_RELATIVE_ADDR      CMD_3
 #define SET_DSR                 CMD_4
 #define IO_SET_OP_COND          CMD_5
+#define SWITCH_FUNC             CMD_6_SD
 #define SWITCH                  CMD_6
 #define SELECT_CARD             CMD_7
 #define DESELECT_CARD           CMD_7nr

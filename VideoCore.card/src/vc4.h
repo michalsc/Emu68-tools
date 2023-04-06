@@ -58,7 +58,7 @@ void SetWriteMask (__REGA0(struct BoardInfo *b), __REGD0(UBYTE mask));
 void SetClearMask (__REGA0(struct BoardInfo *b), __REGD0(UBYTE mask));
 void SetReadPlane (__REGA0(struct BoardInfo *b), __REGD0(UBYTE plane));
 void WaitVerticalSync (__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle));
-BOOL GetVSyncState(__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle));
+BOOL GetVSyncState(__REGA0(struct BoardInfo *b), __REGD0(BOOL expected));
 void FillRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(ULONG color), __REGD5(UBYTE mask), __REGD7(RGBFTYPE format));
 void InvertRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(UBYTE mask), __REGD7(RGBFTYPE format));
 void BlitRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD dx), __REGD3(WORD dy), __REGD4(WORD w), __REGD5(WORD h), __REGD6(UBYTE mask), __REGD7(RGBFTYPE format));
