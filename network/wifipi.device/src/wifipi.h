@@ -5,7 +5,7 @@
 #include <exec/libraries.h>
 #include <exec/devices.h>
 #include <common/compiler.h>
-
+#include <devices/timer.h>
 #include <dos/dos.h>
 #include <libraries/dos.h>
 #include <intuition/intuitionbase.h>
@@ -157,6 +157,10 @@ struct WiFiUnit
     ULONG                   wu_Flags;
     UBYTE                   wu_OrigEtherAddr[6];
     UBYTE                   wu_EtherAddr[6];
+
+    struct timeval          wu_GlomCreationTime;
+    ULONG                   wu_GlomCount;
+    UBYTE *                 wu_GlomLastItemMarker;
 
     struct Key              wu_Keys[4];
     struct ExtJoinParams    wu_JoinParams;

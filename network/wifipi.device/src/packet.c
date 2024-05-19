@@ -9,9 +9,11 @@
 #if defined(__INTELLISENSE__)
 #include <clib/exec_protos.h>
 #include <clib/utility_protos.h>
+#include <clib/timer_protos.h>
 #else
 #include <proto/exec.h>
 #include <proto/utility.h>
+#include <proto/timer.h>
 #endif
 
 #include "d11.h"
@@ -819,6 +821,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
     struct MsgPort *ctrl = CreateMsgPort();
     struct MsgPort *sender = CreateMsgPort();
     struct WiFiBase *WiFiBase = sdio->s_WiFiBase;
+    struct TimerBase *TimerBase;
 
     struct MinList ctrlWaitList;
     ULONG waitDelayTimeout = PACKET_WAIT_DELAY_MAX / waitDelay;
@@ -858,6 +861,8 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
         Signal(caller, SIGBREAKF_CTRL_C);
         return;
     }
+
+    TimerBase = (struct TimerBase *)tr->tr_node.io_Device;
 
     // Set up receiver task pointer in SDIO
     sdio->s_ReceiverTask = FindTask(NULL);
@@ -910,9 +915,9 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
         // Always check if there are data packets for sending
         if (TRUE)
         {
-            struct IOSana2Req *ioList[32];
+            //struct IOSana2Req *ioList[32];
             struct IOSana2Req *msg;
-            ULONG ioCount = 0;
+            //ULONG ioCount = 0;
             UBYTE maxCount;
 
             maxCount = sdio->s_MaxTXSeq - sdio->s_TXSeq;
@@ -925,15 +930,19 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
                 {
                     sendTransfer = TRUE;
 
+                    SendDataPacket(sdio, msg);
+
                     // Put the packet into an array. It will be used later to construct Glom frame
+#if 0
                     ioList[ioCount++] = msg;
+#endif
 
                     if (--maxCount == 0)
                     {
                         //D(bug("[WiFi] No more place in TX\n"));
                         break;
                     }
-
+#if 0
                     // Glom full? Push out large frame
                     // But not yet, for now just send them all out, one after another
                     if (ioCount == 32)
@@ -949,6 +958,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
                         SendGlomDataPacket(sdio, ioList, ioCount);
                         ioCount = 0;
                     }
+#endif
                 }
 
                 // Any write requests left? Push them out now
@@ -961,6 +971,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
                 }
                 else 
                 #endif
+#if 0
                 if (ioCount)
                 {
                     //D(bug("[WiFi] Glom frame would do, there are %ld entries in queue\n", ioCount));
@@ -974,6 +985,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
                     }
                     */
                 }
+#endif
             }
         }
 
@@ -991,6 +1003,19 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
         // Both are great occasions to test if some data is pending
         if (sigSet & ((1 << port->mp_SigBit) | (1 << ctrl->mp_SigBit)))
         {
+            struct timeval now;
+            GetSysTime(&now);
+            SubTime(&now, &WiFiBase->w_Unit->wu_GlomCreationTime);
+
+            /* If glom frame is older than 0.01 second, send it out now */
+            if (now.tv_sec > 0 || now.tv_micro > 10000)
+            {
+                struct PacketHeaderHW *pktBase = sdio->s_TXBuffer;
+                *WiFiBase->w_Unit->wu_GlomLastItemMarker = 1;
+                sdio->SendPKT((UBYTE *)pktBase, LE16(pktBase->ph_Length), sdio);
+                WiFiBase->w_Unit->wu_GlomCount = 0;
+            }
+
             if (sigSet & (1 << ctrl->mp_SigBit))
             {
                 AbortIO(&tr->tr_node);
@@ -1493,32 +1518,60 @@ int SendDataPacket(struct SDIO *sdio, struct IOSana2Req *io)
     struct ExecBase *SysBase = sdio->s_SysBase;
     struct WiFiUnit *unit = WiFiBase->w_Unit;
     struct Opener *opener = io->ios2_BufferManagement;
+    struct TimerBase *TimerBase = unit->wu_TimerBase;
+    ULONG totalLength = 0;
+    UBYTE *byteBuffer = sdio->s_TXBuffer;
 
-    UWORD totLen = sizeof(struct Packet) + io->ios2_DataLength + 4;
+    struct PacketHeaderHW *pktBase = sdio->s_TXBuffer;
+
+    /* If this is not the first packet in gloom, take it's length now */
+    if (unit->wu_GlomCount > 0) {
+        totalLength = LE16(pktBase->ph_Length);
+        byteBuffer += totalLength;
+    }
+    /* New glom packet. Get creation time */
+    else {
+        GetSysTime(&unit->wu_GlomCreationTime);
+    }
+
+    /* Prepare the packet */
     
-    // Raw packet has all data in it, non-raw need to reserve 14 bytes extra
+    struct PacketHeaderHW *hw = (APTR)(byteBuffer + totalLength);
+    struct GlomHeader *gh = (APTR)((UBYTE *)hw + sizeof(struct PacketHeaderHW));
+    struct PacketHeaderSW *hdr = (APTR)((UBYTE *)gh + sizeof(struct GlomHeader));
+
+    UWORD packetLength = io->ios2_DataLength + sizeof(struct Packet) + sizeof(struct GlomHeader) + 4;
+
     if ((io->ios2_Req.io_Flags & SANA2IOF_RAW) == 0)
     {
-        totLen += 14;
+        packetLength += 14;
     }
-    
-    struct Packet *p = sdio->s_TXBuffer;
-    ULONG *clr = (ULONG*)p;
 
-    *clr++ = 0;
-    *clr++ = 0;
-    *clr++ = 0;
+    /* Fill HW header */
+    hw->ph_Length = LE16(packetLength);
+    hw->ph_ChkSum = ~hw->ph_Length;
 
-    p->p_Length = LE16(totLen);
-    p->c_ChkSum = ~p->p_Length;
-    p->c_ChannelFlag = SDPCM_DATA_CHANNEL;
-    p->c_DataOffset = sizeof(struct Packet);
-    p->c_FlowControl = 0;
-    p->c_Seq = sdio->s_TXSeq++;
+    /* Fill out glom header */
+    gh->gh_Length = LE16(packetLength - 4);
+    gh->gh_ReservedB = 0;
+    gh->gh_ReservedW = 0;
+    unit->wu_GlomLastItemMarker = &gh->gh_LastItem;
+    gh->gh_TailPad = LE16((-packetLength) & 3);
 
-    UBYTE *ptr = (UBYTE *)p + p->c_DataOffset;
+    /* Following glom header there is PacketSW header */
+    hdr->c_ChannelFlag = SDPCM_DATA_CHANNEL;
+    hdr->c_DataOffset = sizeof(struct Packet) + sizeof(struct GlomHeader);
+    hdr->c_FlowControl = 0;
+    hdr->c_Seq = sdio->s_TXSeq++;
+    hdr->c_NextLength = 0;
+    hdr->c_MaxSeq = 0;
+    hdr->c_Reserved[0] = 0;
+    hdr->c_Reserved[1] = 0;
 
-    // BDC Header
+    /* Finally packet data */
+    UBYTE *ptr = (UBYTE *)hdr + sizeof(struct PacketHeaderSW);
+
+    /* BDC Header */
     *ptr++ = 0x20;
     *ptr++ = 0;
     *ptr++ = 0;
@@ -1527,14 +1580,16 @@ int SendDataPacket(struct SDIO *sdio, struct IOSana2Req *io)
     if ((io->ios2_Req.io_Flags & SANA2IOF_RAW) == 0)
     {
         // Copy destination
-        for (int i=0; i < 6; i++) ptr[i] = io->ios2_DstAddr[i];
-        
+        for (int i = 0; i < 6; i++)
+            ptr[i] = io->ios2_DstAddr[i];
+
         // Copy source
-        for (int i=0; i < 6; i++) ptr[6 + i] = io->ios2_SrcAddr[i];
+        for (int i = 0; i < 6; i++)
+            ptr[6 + i] = unit->wu_EtherAddr[i];
 
         // Copy packet type
-        *(UWORD*)&ptr[12] = io->ios2_PacketType;
-        ptr+=14;
+        *(UWORD *)&ptr[12] = io->ios2_PacketType;
+        ptr += 14;
     }
 
     if (io->ios2_DataLength != 0)
@@ -1544,15 +1599,33 @@ int SendDataPacket(struct SDIO *sdio, struct IOSana2Req *io)
     }
     else
     {
-        D(bug("[WiFi] Sending non-glom Frame without data, packet type %04lx\n", io->ios2_PacketType));
+        D(bug("[WiFi] Sending Frame without data, packet type %04lx\n", io->ios2_PacketType));
     }
-    //PacketDump(sdio, p, "WiFi.OUT");
 
-    sdio->SendPKT((UBYTE*)p, totLen, sdio);
+    // Increase total length by packet length (aligned)
+    totalLength += (packetLength + 3) & ~3;
+
+    /* Packet is added now, update its length and gloom count. */
+    pktBase->ph_Length = LE16(totalLength);
+    pktBase->ph_ChkSum = ~pktBase->ph_Length;
+
+    /* We don't need the message anymore. Reply it. */
+    ReplyMsg(&io->ios2_Req.io_Message);
     unit->wu_Stats.PacketsSent++;
+
+    /* Increase glom count */
+    unit->wu_GlomCount++;
+
+    /* Is glom frame full? Send it out now */
+    if (unit->wu_GlomCount == 32) {
+        *unit->wu_GlomLastItemMarker = 1;
+        sdio->SendPKT((UBYTE *)pktBase, totalLength, sdio);
+        unit->wu_GlomCount = 0;
+    }
 
     return 1;
 }
+
 #if 0
 void NetworkScanner(struct SDIO *sdio)
 {
