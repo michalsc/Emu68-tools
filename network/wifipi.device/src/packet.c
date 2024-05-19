@@ -916,7 +916,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
             UBYTE maxCount;
 
             maxCount = sdio->s_MaxTXSeq - sdio->s_TXSeq;
-            
+
             /* Make sure we have place in TX */
             if (maxCount)
             {
@@ -1133,6 +1133,8 @@ void CopyPacket(struct IOSana2Req *io, UBYTE *packet, ULONG packetLength)
     struct Opener *opener = io->ios2_BufferManagement;
     struct Library *UtilityBase = WiFiBase->w_UtilityBase;
     UBYTE packetFiltered = FALSE;
+    APTR src;
+    APTR dst;
 
     UBYTE *copyData;
     ULONG copyLength;
@@ -1142,12 +1144,22 @@ void CopyPacket(struct IOSana2Req *io, UBYTE *packet, ULONG packetLength)
     /* Clear broadcast and multicast flags */
     io->ios2_Req.io_Flags &= ~(SANA2IOF_BCAST | SANA2IOF_MCAST);
 
-    /* Copy source and dest addresses */
-    for (int i=0; i < 6; i++) io->ios2_DstAddr[i] = packet[i];
-    for (int i=0; i < 6; i++) io->ios2_SrcAddr[i] = packet[6 + i];
+    /*
+        Copy source and dest addresses
+        Go ugly route to avoid breaking of strict-aliasing rules, avoid loop copying because
+        gcc will not optimize that assuming that UBYTE can be unaligned, avoid calling CopyMem
+        because copying 6 bytes two times is not worth the overhead
+    */
+    src = &packet[0];
+    dst = &io->ios2_DstAddr[0];
+    ((ULONG*)dst)[0] = ((ULONG*)src)[0];
+    ((UWORD*)dst)[2] = ((UWORD*)src)[2];
+    
+    src = &packet[6];
+    dst = &io->ios2_SrcAddr[0];
+    ((ULONG*)dst)[0] = ((ULONG*)src)[0];
+    ((UWORD*)dst)[2] = ((UWORD*)src)[2];
 
-    //CopyMem(packet, io->ios2_DstAddr, 6);
-    //CopyMem(&packet[6], io->ios2_SrcAddr, 6);
     io->ios2_PacketType = type;
 
     /* If dest address is FF:FF:FF:FF:FF:FF then it is a broadcast */
@@ -1391,18 +1403,25 @@ int SendGlomDataPacket(struct SDIO *sdio, struct IOSana2Req **ioList, UBYTE coun
         UBYTE *ptr = (UBYTE *)hdr + sizeof(struct PacketHeaderSW);
 
         /* BDC Header */
-        *ptr++ = 0x20;
-        *ptr++ = 0;
-        *ptr++ = 0;
-        *ptr++ = 0;
+        *(ULONG *)ptr = 0x20000000;
+        ptr += 4;
 
         if ((io->ios2_Req.io_Flags & SANA2IOF_RAW) == 0)
         {
+            // Use the same ugly hack as in case of receiving packets
+            APTR src, dst;
+            
             // Copy destination
-            for (int i=0; i < 6; i++) ptr[i] = io->ios2_DstAddr[i];
-
+            src = &io->ios2_DstAddr[0];
+            dst = &ptr[0];
+            ((ULONG*)dst)[0] = ((ULONG*)src)[0];
+            ((UWORD*)dst)[2] = ((UWORD*)src)[2];
+    
             // Copy source
-            for (int i=0; i < 6; i++) ptr[6 + i] = unit->wu_EtherAddr[i];
+            src = &unit->wu_EtherAddr[0];
+            dst = &ptr[6];
+            ((ULONG*)dst)[0] = ((ULONG*)src)[0];
+            ((UWORD*)dst)[2] = ((UWORD*)src)[2];
 
             // Copy packet type
             *(UWORD*)&ptr[12] = io->ios2_PacketType;
