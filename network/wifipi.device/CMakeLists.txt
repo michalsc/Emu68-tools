@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.0)
-project(WiFiPi VERSION 0.3.4)
+project(WiFiPi VERSION 0.3.5)
 get_verstring(VERSTRING)
 
 add_link_options(-ffreestanding -nostdlib -nostartfiles -Wl,-e,__start)
@@ -44,7 +44,7 @@ add_custom_command(
     COMMAND ${CMAKE_OBJCOPY} -v -O binary "${CMAKE_CURRENT_BINARY_DIR}/wifipi_rom" "${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom"
     COMMAND dd if="${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom" of="${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom~" bs=512k skip=30
     COMMAND mv "${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom~" "${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom"
-    #COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom" /home/michal/tftpboot/
+    COMMAND cp "${CMAKE_CURRENT_BINARY_DIR}/wifipi.rom" /home/michal/tftpboot/
     COMMAND rm "${CMAKE_CURRENT_BINARY_DIR}/wifipi_rom"
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )

@@ -172,6 +172,8 @@ void cmd_int(ULONG cmd, ULONG arg, ULONG timeout, struct SDIO *sdio)
     if((irpts & 0xffff0001) != 0x1)
     {
         D(bug("[WiFI] error occured whilst waiting for command complete interrupt (%08lx), status: %08lx\n", irpts, rd32(sdio->s_SDIO, EMMC_STATUS)));
+        D(bug("[WiFi]   CMD: %08lx, ARG: %08lx, BlocksToTransfer: %ld, BlockSize: %ld, Buffer: %08lx\n", cmd, arg, sdio->s_BlocksToTransfer, sdio->s_BlockSize, (ULONG)sdio->s_Buffer));
+        D(bug("[WiFi]   last good CMD: %08lx, ARG: %08lx, BlocksToTransfer: %ld, BlockSize: %ld\n", sdio->lastCmd, sdio->lastArg, sdio->lastBlockCount, sdio->lastBlockSize));
 
         sdio->s_LastError = irpts & 0xffff0000;
         sdio->s_LastInterrupt = irpts;
@@ -222,6 +224,8 @@ void cmd_int(ULONG cmd, ULONG arg, ULONG timeout, struct SDIO *sdio)
             if((irpts & (0xffff0000 | wr_irpt)) != wr_irpt)
             {
                 D(bug("[WiFi] error occured whilst waiting for data ready interrupt (%08lx)\n", irpts));
+                D(bug("[WiFi]   CMD: %08lx, ARG: %08lx, Current block: %ld, BlocksToTransfer: %ld, BlockSize: %ld, Buffer: %08lx\n", cmd, arg, cur_block, sdio->s_BlocksToTransfer, sdio->s_BlockSize, (ULONG)sdio->s_Buffer));
+                D(bug("[WiFi]   last good CMD: %08lx, ARG: %08lx, BlocksToTransfer: %ld, BlockSize: %ld\n", sdio->lastCmd, sdio->lastArg, sdio->lastBlockCount, sdio->lastBlockSize));
 
                 sdio->s_LastError = irpts & 0xffff0000;
                 sdio->s_LastInterrupt = irpts;
@@ -282,6 +286,9 @@ void cmd_int(ULONG cmd, ULONG arg, ULONG timeout, struct SDIO *sdio)
             if(((irpts & 0xffff0002) != 0x2) && ((irpts & 0xffff0002) != 0x100002))
             {
                 D(bug("[WiFi] error occured whilst waiting for transfer complete interrupt (%08lx)\n", irpts));
+                D(bug("[WiFi]   CMD: %08lx, ARG: %08lx, BlocksToTransfer: %ld, BlockSize: %ld, Buffer: %08lx\n", cmd, arg, sdio->s_BlocksToTransfer, sdio->s_BlockSize, (ULONG)sdio->s_Buffer));
+                D(bug("[WiFi]   last good CMD: %08lx, ARG: %08lx, BlocksToTransfer: %ld, BlockSize: %ld\n", sdio->lastCmd, sdio->lastArg, sdio->lastBlockCount, sdio->lastBlockSize));
+                
                 sdio->s_LastError = irpts & 0xffff0000;
                 sdio->s_LastInterrupt = irpts;
                 return;
@@ -290,6 +297,10 @@ void cmd_int(ULONG cmd, ULONG arg, ULONG timeout, struct SDIO *sdio)
         }
     }
     sdio->s_LastCMDSuccess = 1;
+    sdio->lastArg = arg;
+    sdio->lastCmd = cmd;
+    sdio->lastBlockSize = sdio->s_BlockSize;
+    sdio->lastBlockCount = sdio->s_BlocksToTransfer;
 }
 
 // Reset the CMD line
@@ -786,6 +797,7 @@ void sdio_recvpkt(UBYTE *pkt, ULONG length, struct SDIO *sdio)
         sdio->s_BlocksToTransfer = 1;
         cmd(IO_RW_EXTENDED | SD_DATA_READ, ((SD_FUNC_RAD & 7) << 28) | (reminder & 0x1ff) | (0 << 26), 5000000, sdio);
     }
+
     S_UNLOCK(sdio);
 }
 

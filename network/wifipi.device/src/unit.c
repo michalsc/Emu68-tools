@@ -447,7 +447,9 @@ static int Do_S2_GETSIGNALQUALITY(struct IOSana2Req *io)
         /* Remove QUICK flag and put message on event listener list */
         struct Sana2SignalQuality *quality = io->ios2_StatData;
         PacketCmdIntGet(WiFiBase->w_SDIO, BRCMF_C_GET_RSSI, (APTR)&quality->SignalLevel);
+        D(bug("GET_RSSI ok\n"));
         PacketCmdIntGet(WiFiBase->w_SDIO, BRCMF_C_GET_PHY_NOISE, (APTR)&quality->NoiseLevel);
+        D(bug("GET_PHY_NOISE ok\n"));
 
         D(bug("[WiFi.0] Signal: %ld, Noise: %ld\n", quality->SignalLevel, quality->NoiseLevel));
         return 1;
