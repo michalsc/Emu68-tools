@@ -1044,7 +1044,7 @@ int chip_init(struct SDIO *sdio)
         return 0;
 
     // Initialize list of cores
-    NewMinList(&chip->c_Cores);
+    _NewList(&chip->c_Cores);
 
     chip->c_SDIO = sdio;
     chip->c_WiFiBase = WiFiBase;

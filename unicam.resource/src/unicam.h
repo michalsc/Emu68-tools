@@ -48,6 +48,7 @@ struct UnicamBase {
 
     UWORD               u_KernelB;
     UWORD               u_KernelC;
+    UWORD               u_Aspect;
     UBYTE               u_Scaler;
     UBYTE               u_Phase;
     UBYTE               u_Integer;

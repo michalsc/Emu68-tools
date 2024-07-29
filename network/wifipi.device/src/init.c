@@ -919,9 +919,9 @@ struct WiFiBase * WiFi_Init(REGARG(struct WiFiBase *base, "d0"), REGARG(BPTR seg
                 unit->wu_Base = WiFiBase;
 
                 InitSemaphore(&unit->wu_Lock);
-                NewMinList(&unit->wu_Openers);
-                NewMinList(&unit->wu_MulticastRanges);
-                NewMinList(&unit->wu_TypeTrackers);
+                _NewList(&unit->wu_Openers);
+                _NewList(&unit->wu_MulticastRanges);
+                _NewList(&unit->wu_TypeTrackers);
                 
                 StartUnitTask(unit);
                 WiFiBase->w_Unit = unit;

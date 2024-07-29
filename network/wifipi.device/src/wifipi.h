@@ -268,6 +268,7 @@ BOOL LoadFirmware(struct Chip *chip);
 
 int chip_init(struct SDIO *sdio);
 
+void _NewList(APTR listPTR);
 void _bzero(APTR ptr, ULONG sz);
 APTR _memcpy(APTR dst, CONST_APTR src, ULONG sz);
 ULONG _strlen(CONST_STRPTR c);

@@ -1,4 +1,3 @@
-#include <clib/alib_protos.h>
 #include <exec/resident.h>
 #include <exec/nodes.h>
 #include <exec/devices.h>
@@ -53,8 +52,9 @@ static uint32_t WiFi_ExtFunc()
     return 0;
 }
 
-void NewList(struct List *lh)
+void _NewList(APTR listPTR)
 {
+    struct List *lh = listPTR;
     lh->lh_Head = (struct Node *)&(lh->lh_Tail);
     lh->lh_Tail = NULL;
     lh->lh_TailPred = (struct Node *)&(lh->lh_Head);
@@ -224,13 +224,13 @@ void WiFi_Open(REGARG(struct IOSana2Req * io, "a1"), REGARG(LONG unitNumber, "d0
 
             io->ios2_Req.io_Unit = &unit->wu_Unit;
 
-            NewList(&opener->o_ReadPort.mp_MsgList);
+            _NewList(&opener->o_ReadPort.mp_MsgList);
             opener->o_ReadPort.mp_Flags = PA_IGNORE;
 
-            NewList(&opener->o_OrphanListeners.mp_MsgList);
+            _NewList(&opener->o_OrphanListeners.mp_MsgList);
             opener->o_OrphanListeners.mp_Flags = PA_IGNORE;
 
-            NewList(&opener->o_EventListeners.mp_MsgList);
+            _NewList(&opener->o_EventListeners.mp_MsgList);
             opener->o_EventListeners.mp_Flags = PA_IGNORE;
 
             opener->o_RXFunc = (APTR)GetTagData(S2_CopyToBuff, (ULONG)opener->o_RXFunc, tags);
@@ -251,7 +251,6 @@ void WiFi_Open(REGARG(struct IOSana2Req * io, "a1"), REGARG(LONG unitNumber, "d0
                 StartUnit(unit);
             }
         }
-
     }
 
     D(bug("[WiFi] WiFi_Open ends with status %ld\n", error));

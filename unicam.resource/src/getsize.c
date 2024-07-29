@@ -22,7 +22,8 @@ ULONG L_UnicamGetSize(REGARG(struct UnicamBase * UnicamBase, "a6"))
 
 ULONG L_UnicamGetMode(REGARG(struct UnicamBase * UnicamBase, "a6"))
 {
-    ULONG mode = UnicamBase->u_Mode;
+    ULONG mode = UnicamBase->u_Aspect;
+    mode = (mode << 8) | UnicamBase->u_Mode;
     mode = (mode << 8) | UnicamBase->u_BPP;
     return mode;
 }

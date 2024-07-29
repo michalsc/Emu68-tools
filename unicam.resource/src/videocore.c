@@ -134,13 +134,13 @@ void VC4_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
     volatile ULONG *displist = (ULONG *)((ULONG)UnicamBase->u_PeriphBase + 0x00402000);
 
     if (UnicamBase->u_Size.width == UnicamBase->u_DisplaySize.width &&
-        UnicamBase->u_Size.height == UnicamBase->u_DisplaySize.height)
+        UnicamBase->u_Size.height == UnicamBase->u_DisplaySize.height && UnicamBase->u_Aspect == 1000)
     {
         unity = 1;
     }
     else
     {
-        scale_x = 0x10000 * UnicamBase->u_Size.width / UnicamBase->u_DisplaySize.width;
+        scale_x = 0x10000 * ((UnicamBase->u_Size.width * UnicamBase->u_Aspect) / 1000) / UnicamBase->u_DisplaySize.width;
         scale_y = 0x10000 * UnicamBase->u_Size.height / UnicamBase->u_DisplaySize.height;
 
         recip_x = 0xffffffff / scale_x;
@@ -159,8 +159,11 @@ void VC4_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             scale = 0x10000 / (ULONG)(0x10000 / scale);
         }
 
-        calc_width = (0x10000 * UnicamBase->u_Size.width) / scale;
-        calc_height = (0x10000 * UnicamBase->u_Size.height) / scale;
+        scale_x = scale * 1000 / UnicamBase->u_Aspect;
+        scale_y = scale;
+
+        calc_width = (0x10000 * UnicamBase->u_Size.width) / scale_x;
+        calc_height = (0x10000 * UnicamBase->u_Size.height) / scale_y;
 
         offset_x = (UnicamBase->u_DisplaySize.width - calc_width) >> 1;
         offset_y = (UnicamBase->u_DisplaySize.height - calc_height) >> 1;
@@ -182,9 +185,13 @@ void VC4_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             CONTROL_VALID
             | CONTROL_WORDS(7)
             | CONTROL_UNITY
-            | CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565)
             | CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XRGB)
         );
+
+        if (UnicamBase->u_BPP == 16)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565));
+        else if (UnicamBase->u_BPP == 24)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB888));
 
         /* Center it on the screen */
         displist[cnt++] = LE32(POS0_X(offset_x) | POS0_Y(offset_y) | POS0_ALPHA(0xff));
@@ -212,9 +219,13 @@ void VC4_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             CONTROL_VALID
             | CONTROL_WORDS(16)
             | 0x01800 
-            | CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565)
             | CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XRGB)
         );
+
+        if (UnicamBase->u_BPP == 16)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565));
+        else if (UnicamBase->u_BPP == 24)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB888));
 
         /* Center plane on the screen */
         displist[cnt++] = LE32(POS0_X(offset_x) | POS0_Y(offset_y) | POS0_ALPHA(0xff));
@@ -234,8 +245,8 @@ void VC4_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
         displist[cnt++] = LE32(0);
 
         /* Set PPF Scaler */
-        displist[cnt++] = LE32((scale << 8) | (UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
-        displist[cnt++] = LE32((scale << 8) | (UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
+        displist[cnt++] = LE32((scale_x << 8) | (UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
+        displist[cnt++] = LE32((scale_y << 8) | (UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
         displist[cnt++] = LE32(0); // Scratch written by HVS
 
         displist[cnt++] = LE32(kernel);
@@ -305,13 +316,13 @@ void VC6_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
     volatile ULONG *displist = (ULONG *)((ULONG)UnicamBase->u_PeriphBase + 0x00404000);
 
     if (UnicamBase->u_Size.width == UnicamBase->u_DisplaySize.width &&
-        UnicamBase->u_Size.height == UnicamBase->u_DisplaySize.height)
+        UnicamBase->u_Size.height == UnicamBase->u_DisplaySize.height && UnicamBase->u_Aspect == 1000)
     {
         unity = 1;
     }
     else
     {
-        scale_x = 0x10000 * UnicamBase->u_Size.width / UnicamBase->u_DisplaySize.width;
+        scale_x = 0x10000 * ((UnicamBase->u_Size.width * UnicamBase->u_Aspect) / 1000) / UnicamBase->u_DisplaySize.width;
         scale_y = 0x10000 * UnicamBase->u_Size.height / UnicamBase->u_DisplaySize.height;
 
         recip_x = 0xffffffff / scale_x;
@@ -330,8 +341,11 @@ void VC6_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             scale = 0x10000 / (ULONG)(0x10000 / scale);
         }
 
-        calc_width = (0x10000 * UnicamBase->u_Size.width) / scale;
-        calc_height = (0x10000 * UnicamBase->u_Size.height) / scale;
+        scale_x = scale * 1000 / UnicamBase->u_Aspect;
+        scale_y = scale;
+
+        calc_width = (0x10000 * UnicamBase->u_Size.width) / scale_x;
+        calc_height = (0x10000 * UnicamBase->u_Size.height) / scale_y;
 
         offset_x = (UnicamBase->u_DisplaySize.width - calc_width) >> 1;
         offset_y = (UnicamBase->u_DisplaySize.height - calc_height) >> 1;
@@ -355,9 +369,13 @@ void VC6_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             | VC6_CONTROL_UNITY
             | VC6_CONTROL_ALPHA_EXPAND
             | VC6_CONTROL_RGB_EXPAND
-            | VC6_CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565)
             | VC6_CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XRGB)
         );
+
+        if (UnicamBase->u_BPP == 16)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565));
+        else if (UnicamBase->u_BPP == 24)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB888));
 
         /* Center it on the screen */
         displist[cnt++] = LE32(VC6_POS0_X(offset_x) | VC6_POS0_Y(offset_y));
@@ -387,9 +405,13 @@ void VC6_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
             | VC6_CONTROL_WORDS(17)
             | VC6_CONTROL_ALPHA_EXPAND
             | VC6_CONTROL_RGB_EXPAND
-            | VC6_CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565)
             | VC6_CONTROL_PIXEL_ORDER(HVS_PIXEL_ORDER_XRGB)
         );
+
+        if (UnicamBase->u_BPP == 16)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB565));
+        else if (UnicamBase->u_BPP == 24)
+            displist[cnt - 1] |= LE32(CONTROL_FORMAT(HVS_PIXEL_FORMAT_RGB888));
 
         /* Center plane on the screen */
         displist[cnt++] = LE32(VC6_POS0_X(offset_x) | VC6_POS0_Y(offset_y));
@@ -409,8 +431,8 @@ void VC6_ConstructUnicamDL(struct UnicamBase *UnicamBase, ULONG kernel)
         displist[cnt++] = LE32(0);
 
         /* Set PPF Scaler */
-        displist[cnt++] = LE32((scale << 8) | ((ULONG)UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
-        displist[cnt++] = LE32((scale << 8) | ((ULONG)UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
+        displist[cnt++] = LE32((scale_x << 8) | ((ULONG)UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
+        displist[cnt++] = LE32((scale_y << 8) | ((ULONG)UnicamBase->u_Scaler << 30) | UnicamBase->u_Phase);
         displist[cnt++] = LE32(0); // Scratch written by HVS
 
         displist[cnt++] = LE32(kernel);

@@ -826,7 +826,7 @@ void PacketReceiver(struct SDIO *sdio, struct Task *caller)
     struct MinList ctrlWaitList;
     ULONG waitDelayTimeout = PACKET_WAIT_DELAY_MAX / waitDelay;
 
-    NewMinList(&ctrlWaitList);
+    _NewList(&ctrlWaitList);
 
     /* Sender port is signal-free */
     FreeSignal(sender->mp_SigBit);
@@ -2562,7 +2562,7 @@ void StartPacketReceiver(struct SDIO *sdio)
     task->tc_Node.ln_Type = NT_TASK;
     task->tc_Node.ln_Pri = PACKET_RECV_PRIORITY;
 
-    NewMinList((struct MinList *)&task->tc_MemEntry);
+    _NewList((struct MinList *)&task->tc_MemEntry);
     AddHead(&task->tc_MemEntry, &ml->ml_Node);
 
     D(bug("[WiFi] Bringing packet receiver to life\n"));

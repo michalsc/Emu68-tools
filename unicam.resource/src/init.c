@@ -100,6 +100,7 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
             UnicamBase->u_Integer = 0;
             UnicamBase->u_KernelB = 250;
             UnicamBase->u_KernelC = 750;
+            UnicamBase->u_Aspect = 1000;
 
             SumLibrary((struct Library*)UnicamBase);
 
@@ -153,6 +154,26 @@ APTR Init(REGARG(struct ExecBase *SysBase, "a6"))
                     val = 1000;
                 
                 UnicamBase->u_KernelC = val;
+            }
+
+            if ((cmd = FindToken(cmdline, "unicam.aspect=")))
+            {
+                ULONG val = 0;
+
+                for (int i=0; i < 5; i++)
+                {
+                    if (cmd[14 + i] < '0' || cmd[14 + i] > '9')
+                        break;
+
+                    val = val * 10 + cmd[14 + i] - '0';
+                }
+
+                if (val > 3000)
+                    val = 3000;
+                if (val < 333)
+                    val = 333;
+
+                UnicamBase->u_Aspect = val;
             }
 
             if (FindToken(cmdline, "unicam.smooth"))

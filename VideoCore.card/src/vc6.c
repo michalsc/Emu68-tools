@@ -926,10 +926,10 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
     UBYTE scaler;
     UBYTE phase;
 
-    ULONG fullHeight = UnicamGetSize();
-    ULONG fullWidth = fullHeight >> 16;
-    fullHeight &= 0xffff;
-    ULONG bpp = (UnicamGetMode() & 0xff) / 8;
+    const ULONG fullHeight = UnicamGetSize() & 0xffff;
+    const ULONG fullWidth = UnicamGetSize() >> 16;
+    const ULONG bpp = (UnicamGetMode() & 0xff) / 8;
+    const ULONG aspect = UnicamGetMode() >> 16;
 
     ULONG config = UnicamGetConfig();
 
@@ -953,13 +953,13 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
     volatile ULONG *displist = (ULONG *)0xf2404000;
 
     if (crop_w == VC4Base->vc4_DispSize.width &&
-        crop_h == VC4Base->vc4_DispSize.height)
+        crop_h == VC4Base->vc4_DispSize.height && aspect == 1000)
     {
         unity = 1;
     }
     else
     {
-        scale_x = 0x10000 * crop_w / VC4Base->vc4_DispSize.width;
+        scale_x = 0x10000 * ((crop_w * aspect) / 1000) / VC4Base->vc4_DispSize.width;
         scale_y = 0x10000 * crop_h / VC4Base->vc4_DispSize.height;
 
         recip_x = 0xffffffff / scale_x;
@@ -978,8 +978,11 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
             scale = 0x10000 / (ULONG)(0x10000 / scale);
         }
 
-        calc_width = (0x10000 * crop_w) / scale;
-        calc_height = (0x10000 * crop_h) / scale;
+        scale_x = scale * 1000 / aspect;
+        scale_y = scale;
+
+        calc_width = (0x10000 * crop_w) / scale_x;
+        calc_height = (0x10000 * crop_h) / scale_y;
 
         offset_x = (VC4Base->vc4_DispSize.width - calc_width) >> 1;
         offset_y = (VC4Base->vc4_DispSize.height - calc_height) >> 1;
@@ -1003,8 +1006,12 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
             | VC6_CONTROL_UNITY
             | VC6_CONTROL_ALPHA_EXPAND
             | VC6_CONTROL_RGB_EXPAND
-            | mode_table[RGBFB_R5G6B5PC]
         );
+
+        if (bpp == 2)
+            displist[cnt - 1] |= LE32(mode_table[RGBFB_R5G6B5PC]);
+        else if (bpp == 3)
+            displist[cnt - 1] |= LE32(mode_table[RGBFB_R8G8B8]);
 
         /* Center it on the screen */
         displist[cnt++] = LE32(VC6_POS0_X(offset_x) | VC6_POS0_Y(offset_y));
@@ -1032,8 +1039,12 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
             | VC6_CONTROL_WORDS(17)
             | VC6_CONTROL_ALPHA_EXPAND
             | VC6_CONTROL_RGB_EXPAND
-            | mode_table[RGBFB_R5G6B5PC]
         );
+
+        if (bpp == 2)
+            displist[cnt - 1] |= LE32(mode_table[RGBFB_R5G6B5PC]);
+        else if (bpp == 3)
+            displist[cnt - 1] |= LE32(mode_table[RGBFB_R8G8B8]);
 
         /* Center plane on the screen */
         displist[cnt++] = LE32(VC6_POS0_X(offset_x) | VC6_POS0_Y(offset_y));
@@ -1051,8 +1062,8 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
         displist[cnt++] = LE32(0);
 
         /* Set PPF Scaler */
-        displist[cnt++] = LE32((scale << 8) | (scaler << 30) | phase);
-        displist[cnt++] = LE32((scale << 8) | (scaler << 30) | phase);
+        displist[cnt++] = LE32((scale_x << 8) | (scaler << 30) | phase);
+        displist[cnt++] = LE32((scale_y << 8) | (scaler << 30) | phase);
         displist[cnt++] = LE32(0); // Scratch written by HVS
 
         if (config & UNICAMF_SMOOTHING)

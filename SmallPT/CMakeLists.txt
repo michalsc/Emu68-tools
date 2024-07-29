@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.14.0)
 project(SmallPT VERSION 1.0.0)
 get_verstring(VERSTRING)
 
-add_link_options(-m68040 -noixemul)
+add_link_options(-m68040 -m68881 -noixemul)
 add_compile_options(-Os -m68040 -m68881 -fomit-frame-pointer)
 add_compile_definitions(PRIVATE VERSION_STRING="${VERSTRING}")
 
