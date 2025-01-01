@@ -3,7 +3,7 @@ project(Buddabrot VERSION 1.0.0)
 get_verstring(VERSTRING)
 
 add_link_options(-m68040 -m68881 -noixemul)
-add_compile_options(-O3 -m68040 -m68881 -fomit-frame-pointer)
+add_compile_options(-O3 -m68040 -ffast-math -m68881 -fomit-frame-pointer)
 add_compile_definitions(PRIVATE VERSION_STRING="${VERSTRING}")
 
 add_executable(Buddhabrot
