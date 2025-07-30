@@ -1,6 +1,7 @@
 #ifndef _VC6_H
 #define _VC6_H
 
+#include <common/compiler.h>
 #include <stdint.h>
 #include "boardinfo.h"
 
@@ -43,38 +44,58 @@
 #define VC6_SCALER_POS2_WIDTH_MASK                  0x00003fff
 #define VC6_SCALER_POS2_WIDTH_SHIFT                 0
 
-void VC6_SetDAC(struct BoardInfo *bi asm("a0"), RGBFTYPE format asm("d7"));
-void VC6_SetGC(struct BoardInfo *bi asm("a0"), struct ModeInfo *mode_info asm("a1"), BOOL border asm("d0"));
-UWORD VC6_SetSwitch (__REGA0(struct BoardInfo *b), __REGD0(UWORD enabled));
-void VC6_SetPanning (__REGA0(struct BoardInfo *b), __REGA1(UBYTE *addr), __REGD0(UWORD width), __REGD1(WORD x_offset), __REGD2(WORD y_offset), __REGD7(RGBFTYPE format));
-void VC6_SetColorArray (__REGA0(struct BoardInfo *b), __REGD0(UWORD start), __REGD1(UWORD num));
-UWORD VC6_CalculateBytesPerRow (__REGA0(struct BoardInfo *b), __REGD0(UWORD width), __REGD7(RGBFTYPE format));
-APTR VC6_CalculateMemory (__REGA0(struct BoardInfo *b), __REGA1(unsigned long addr), __REGD7(RGBFTYPE format));
-ULONG VC6_GetCompatibleFormats (__REGA0(struct BoardInfo *b), __REGD7(RGBFTYPE format));
-UWORD VC6_SetDisplay (__REGA0(struct BoardInfo *b), __REGD0(UWORD enabled));
-LONG VC6_ResolvePixelClock (__REGA0(struct BoardInfo *b), __REGA1(struct ModeInfo *mode_info), __REGD0(ULONG pixel_clock), __REGD7(RGBFTYPE format));
-ULONG VC6_GetPixelClock (__REGA0(struct BoardInfo *b), __REGA1(struct ModeInfo *mode_info), __REGD0(ULONG index), __REGD7(RGBFTYPE format));
-void VC6_SetClock (__REGA0(struct BoardInfo *b));
-void VC6_SetMemoryMode (__REGA0(struct BoardInfo *b), __REGD7(RGBFTYPE format));
-void VC6_SetWriteMask (__REGA0(struct BoardInfo *b), __REGD0(UBYTE mask));
-void VC6_SetClearMask (__REGA0(struct BoardInfo *b), __REGD0(UBYTE mask));
-void VC6_SetReadPlane (__REGA0(struct BoardInfo *b), __REGD0(UBYTE plane));
-void VC6_WaitVerticalSync (__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle));
-BOOL VC6_GetVSyncState(__REGA0(struct BoardInfo *b), __REGD0(BOOL toggle));
-void VC6_FillRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(ULONG color), __REGD5(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_InvertRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_BlitRect (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD dx), __REGD3(WORD dy), __REGD4(WORD w), __REGD5(WORD h), __REGD6(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_BlitRectNoMaskComplete (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *rs), __REGA2(struct RenderInfo *rt), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD dx), __REGD3(WORD dy), __REGD4(WORD w), __REGD5(WORD h), __REGD6(UBYTE minterm), __REGD7(RGBFTYPE format));
-void VC6_BlitTemplate (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGA2(struct Template *t), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_BlitPattern (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGA2(struct Pattern *p), __REGD0(WORD x), __REGD1(WORD y), __REGD2(WORD w), __REGD3(WORD h), __REGD4(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_DrawLine (__REGA0(struct BoardInfo *b), __REGA1(struct RenderInfo *r), __REGA2(struct Line *l), __REGD0(UBYTE mask), __REGD7(RGBFTYPE format));
-void VC6_BlitPlanar2Chunky (__REGA0(struct BoardInfo *b), __REGA1(struct BitMap *bm), __REGA2(struct RenderInfo *r), __REGD0(SHORT x), __REGD1(SHORT y), __REGD2(SHORT dx), __REGD3(SHORT dy), __REGD4(SHORT w), __REGD5(SHORT h), __REGD6(UBYTE minterm), __REGD7(UBYTE mask));
-void VC6_BlitPlanar2Direct (__REGA0(struct BoardInfo *b), __REGA1(struct BitMap *bm), __REGA2(struct RenderInfo *r), __REGA3(struct ColorIndexMapping *clut), __REGD0(SHORT x), __REGD1(SHORT y), __REGD2(SHORT dx), __REGD3(SHORT dy), __REGD4(SHORT w), __REGD5(SHORT h), __REGD6(UBYTE minterm), __REGD7(UBYTE mask));
-void VC6_SetSprite (__REGA0(struct BoardInfo *b), __REGD0(BOOL enable), __REGD7(RGBFTYPE format));
-void VC6_SetSpritePosition (__REGA0(struct BoardInfo *b), __REGD0(WORD x), __REGD1(WORD y), __REGD7(RGBFTYPE format));
-void VC6_SetSpriteImage (__REGA0(struct BoardInfo *b), __REGD7(RGBFTYPE format));
-void VC6_SetSpriteColor (__REGA0(struct BoardInfo *b), __REGD0(UBYTE idx), __REGD1(UBYTE R), __REGD2(UBYTE G), __REGD3(UBYTE B), __REGD7(RGBFTYPE format));
-ULONG VC6_GetVBeamPos(struct BoardInfo *b asm("a0"));
+void    VC6_SetDAC(REGARG(struct BoardInfo *bi, "a0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetGC(REGARG(struct BoardInfo *bi, "a0"), REGARG(struct ModeInfo *mode_info, "a1"), REGARG(BOOL border, "d0"));
+UWORD   VC6_SetSwitch(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD enabled, "d0"));
+void    VC6_SetPanning(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE *addr, "a1"), REGARG(UWORD width, "d0"), REGARG(WORD x_offset, "d1"), REGARG(WORD y_offset, "d2"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetColorArray(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD start, "d0"), REGARG(UWORD num, "d1"));
+UWORD   VC6_CalculateBytesPerRow(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD width, "d0"), REGARG(RGBFTYPE format, "d7"));
+APTR    VC6_CalculateMemory(REGARG(struct BoardInfo *b, "a0"), REGARG(unsigned long addr, "a1"), REGARG(RGBFTYPE format, "d7"));
+ULONG   VC6_GetCompatibleFormats(REGARG(struct BoardInfo *b, "a0"), REGARG(RGBFTYPE format, "d7"));
+UWORD   VC6_SetDisplay(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD enabled, "d0"));
+LONG    VC6_ResolvePixelClock(REGARG(struct BoardInfo *b, "a0"), REGARG(struct ModeInfo *mode_info, "a1"), REGARG(ULONG pixel_clock, "d0"), REGARG(RGBFTYPE format, "d7"));
+ULONG   VC6_GetPixelClock(REGARG(struct BoardInfo *b, "a0"), REGARG(struct ModeInfo *mode_info, "a1"), REGARG(ULONG index, "d0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetClock(REGARG(struct BoardInfo *b, "a0"));
+void    VC6_SetMemoryMode(REGARG(struct BoardInfo *b, "a0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetWriteMask(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE mask, "d0"));
+void    VC6_SetClearMask(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE mask, "d0"));
+void    VC6_SetReadPlane(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE plane, "d0"));
+void    VC6_WaitVerticalSync(REGARG(struct BoardInfo *b, "a0"), REGARG(BOOL toggle, "d0"));
+BOOL    VC6_GetVSyncState(REGARG(struct BoardInfo *b, "a0"), REGARG(BOOL toggle, "d0"));
+void    VC6_FillRect(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD w, "d2"), REGARG(WORD h, "d3"), REGARG(ULONG color, "d4"), REGARG(UBYTE mask, "d5"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_InvertRect(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD w, "d2"), REGARG(WORD h, "d3"), REGARG(UBYTE mask, "d4"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_BlitRect(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD dx, "d2"), REGARG(WORD dy, "d3"), REGARG(WORD w, "d4"), REGARG(WORD h, "d5"), REGARG(UBYTE mask, "d6"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_BlitRectNoMaskComplete(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *rs, "a1"), REGARG(struct RenderInfo *rt, "a2"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD dx, "d2"), REGARG(WORD dy, "d3"), REGARG(WORD w, "d4"), REGARG(WORD h, "d5"), REGARG(UBYTE minterm, "d6"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_BlitTemplate(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(struct Template *t, "a2"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD w, "d2"), REGARG(WORD h, "d3"), REGARG(UBYTE mask, "d4"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_BlitPattern(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(struct Pattern *p, "a2"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(WORD w, "d2"), REGARG(WORD h, "d3"), REGARG(UBYTE mask, "d4"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_DrawLine(REGARG(struct BoardInfo *b, "a0"), REGARG(struct RenderInfo *r, "a1"), REGARG(struct Line *l, "a2"), REGARG(UBYTE mask, "d0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_BlitPlanar2Chunky(REGARG(struct BoardInfo *b, "a0"), REGARG(struct BitMap *bm, "a1"), REGARG(struct RenderInfo *r, "a2"), REGARG(SHORT x, "d0"), REGARG(SHORT y, "d1"), REGARG(SHORT dx, "d2"), REGARG(SHORT dy, "d3"), REGARG(SHORT w, "d4"), REGARG(SHORT h, "d5"), REGARG(UBYTE minterm, "d6"), REGARG(UBYTE mask, "d7"));
+void    VC6_BlitPlanar2Direct(REGARG(struct BoardInfo *b, "a0"), REGARG(struct BitMap *bm, "a1"), REGARG(struct RenderInfo *r, "a2"), REGARG(struct ColorIndexMapping *clut, "a3"), REGARG(SHORT x, "d0"), REGARG(SHORT y, "d1"), REGARG(SHORT dx, "d2"), REGARG(SHORT dy, "d3"), REGARG(SHORT w, "d4"), REGARG(SHORT h, "d5"), REGARG(UBYTE minterm, "d6"), REGARG(UBYTE mask, "d7"));
+void    VC6_SetSprite(REGARG(struct BoardInfo *b, "a0"), REGARG(BOOL enable, "d0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetSpritePosition(REGARG(struct BoardInfo *b, "a0"), REGARG(WORD x, "d0"), REGARG(WORD y, "d1"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetSpriteImage(REGARG(struct BoardInfo *b, "a0"), REGARG(RGBFTYPE format, "d7"));
+void    VC6_SetSpriteColor(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE idx, "d0"), REGARG(UBYTE R, "d1"), REGARG(UBYTE G, "d2"), REGARG(UBYTE B, "d3"), REGARG(RGBFTYPE format, "d7"));
+ULONG   VC6_GetVBeamPos(REGARG(struct BoardInfo *b, "a0"));
+void *  VC6_CreateFeature(REGARG(struct BoardInfo *b, "a0"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a1"));
+BOOL    VC6_DeleteFeature(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR feature, "a1"), REGARG(ULONG type, "d0"));
+ULONG   VC6_GetFeatureAttrs(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR featuredata, "a1"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a2"));
+ULONG   VC6_SetFeatureAttrs(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR featuredata, "a1"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a2"));
+
+struct VC6MemWindow {
+    struct BitMap *     mw_BitMap;
+    struct ModeInfo *   mw_ModeInfo;
+    APTR                mw_Memory;
+    UWORD               mw_SourceWidth;
+    UWORD               mw_SourceHeight;
+    ULONG               mw_Format;
+    ULONG               mw_ModeFormat;
+    ULONG *             mw_DisplayList;
+    ULONG               mw_DisplayListSize;
+    UWORD               mw_ClipLeft;
+    UWORD               mw_ClipTop;
+    UWORD               mw_ClipWidth;
+    UWORD               mw_ClipHeight;
+};
 
 extern int unity_kernel;
 extern int kernel_start;

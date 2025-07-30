@@ -467,12 +467,26 @@ static int InitCard(REGARG(struct BoardInfo* bi, "a0"), REGARG(const char **Tool
     bi->PaletteChipType = PCT_S3ViRGE;
     bi->GraphicsControllerType = GCT_S3ViRGE;
 
-    bi->Flags |= BIF_GRANTDIRECTACCESS | BIF_FLICKERFIXER | BIF_HARDWARESPRITE; // | BIF_BLITTER;
+    bi->Flags = bi->Flags
+            | BIF_GRANTDIRECTACCESS 
+            | BIF_HARDWARESPRITE
+            | BIF_SYSTEM2SCREENBLITS
+//            | BIF_FLICKERFIXER
+            | BIF_VIDEOWINDOW
+            | BIF_VIDEOCAPTURE; // | BIF_BLITTER  ;
+
+    bug("[VideoCore] bi->Flags = %08lx\n", bi->Flags);
+
+    //bi->Flags &= ~BIF_INDISPLAYCHAIN;
+
+    bug("[VideoCore] bi->Flags = %08lx\n", bi->Flags);
+
     bi->RGBFormats = 
         RGBFF_TRUEALPHA | 
         RGBFF_TRUECOLOR | 
         RGBFF_R5G6B5PC | RGBFF_R5G5B5PC | RGBFF_B5G6R5PC | RGBFF_B5G5R5PC | // RGBFF_HICOLOR | 
         RGBFF_CLUT; //RGBFF_HICOLOR | RGBFF_TRUEALPHA | RGBFF_CLUT;
+
     bi->SoftSpriteFlags = 0;
     bi->BitsPerCannon = 8;
 
@@ -548,33 +562,34 @@ static int InitCard(REGARG(struct BoardInfo* bi, "a0"), REGARG(const char **Tool
         bi->SetSpriteImage = (void *)VC6_SetSpriteImage;
         bi->SetSpriteColor = (void *)VC6_SetSpriteColor;
 
-        //bi->CreateFeature = (void *)NULL;
-        //bi->SetFeatureAttrs = (void *)NULL;
-        //bi->DeleteFeature = (void *)NULL;
+        bi->CreateFeature = (void *)VC6_CreateFeature;
+        bi->SetFeatureAttrs = (void *)VC6_SetFeatureAttrs;
+        bi->GetFeatureAttrs = (void *)VC6_GetFeatureAttrs;
+        bi->DeleteFeature = (void *)VC6_DeleteFeature;
     }
     else
     {
         // Basic P96 functions needed for "dumb frame buffer" operation
-        bi->SetSwitch = (void *)SetSwitch;
-        bi->SetColorArray = (void *)SetColorArray;
-        bi->SetDAC = (void *)SetDAC;
-        bi->SetGC = (void *)SetGC;
-        bi->SetPanning = (void *)SetPanning;
-        bi->CalculateBytesPerRow = (void *)CalculateBytesPerRow;
-        bi->CalculateMemory = (void *)CalculateMemory;
-        bi->GetCompatibleFormats = (void *)GetCompatibleFormats;
-        bi->SetDisplay = (void *)SetDisplay;
+        bi->SetSwitch = (void *)VC4_SetSwitch;
+        bi->SetColorArray = (void *)VC4_SetColorArray;
+        bi->SetDAC = (void *)VC4_SetDAC;
+        bi->SetGC = (void *)VC4_SetGC;
+        bi->SetPanning = (void *)VC4_SetPanning;
+        bi->CalculateBytesPerRow = (void *)VC4_CalculateBytesPerRow;
+        bi->CalculateMemory = (void *)VC4_CalculateMemory;
+        bi->GetCompatibleFormats = (void *)VC4_GetCompatibleFormats;
+        bi->SetDisplay = (void *)VC4_SetDisplay;
 
-        bi->ResolvePixelClock = (void *)ResolvePixelClock;
-        bi->GetPixelClock = (void *)GetPixelClock;
-        bi->SetClock = (void *)SetClock;
+        bi->ResolvePixelClock = (void *)VC4_ResolvePixelClock;
+        bi->GetPixelClock = (void *)VC4_GetPixelClock;
+        bi->SetClock = (void *)VC4_SetClock;
 
-        bi->SetMemoryMode = (void *)SetMemoryMode;
-        bi->SetWriteMask = (void *)SetWriteMask;
-        bi->SetClearMask = (void *)SetClearMask;
-        bi->SetReadPlane = (void *)SetReadPlane;
+        bi->SetMemoryMode = (void *)VC4_SetMemoryMode;
+        bi->SetWriteMask = (void *)VC4_SetWriteMask;
+        bi->SetClearMask = (void *)VC4_SetClearMask;
+        bi->SetReadPlane = (void *)VC4_SetReadPlane;
 
-        bi->WaitVerticalSync = (void *)WaitVerticalSync;
+        bi->WaitVerticalSync = (void *)VC4_WaitVerticalSync;
 
         // Additional functions for "blitter" acceleration and vblank handling
         //bi->SetInterrupt = (void *)NULL;
@@ -601,7 +616,7 @@ static int InitCard(REGARG(struct BoardInfo* bi, "a0"), REGARG(const char **Tool
         //bi->ReInitMemory = (void *)NULL;
         //bi->WriteYUVRect = (void *)NULL;
         //bi->GetVSyncState = (void *)GetVSyncState;
-        bi->GetVBeamPos = (void *)GetVBeamPos;
+        bi->GetVBeamPos = (void *)VC4_GetVBeamPos;
         //bi->SetDPMSLevel = (void *)NULL;
         //bi->ResetChip = (void *)NULL;
         //bi->GetFeatureAttrs = (void *)NULL;
@@ -609,10 +624,10 @@ static int InitCard(REGARG(struct BoardInfo* bi, "a0"), REGARG(const char **Tool
         //bi->FreeBitMap = (void *)NULL;
         //bi->GetBitMapAttr = (void *)NULL;
 
-        bi->SetSprite = (void *)SetSprite;
-        bi->SetSpritePosition = (void *)SetSpritePosition;
-        bi->SetSpriteImage = (void *)SetSpriteImage;
-        bi->SetSpriteColor = (void *)SetSpriteColor;
+        bi->SetSprite = (void *)VC4_SetSprite;
+        bi->SetSpritePosition = (void *)VC4_SetSpritePosition;
+        bi->SetSpriteImage = (void *)VC4_SetSpriteImage;
+        bi->SetSpriteColor = (void *)VC4_SetSpriteColor;
 
         //bi->CreateFeature = (void *)NULL;
         //bi->SetFeatureAttrs = (void *)NULL;

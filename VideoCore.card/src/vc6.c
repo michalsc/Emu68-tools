@@ -4,6 +4,7 @@
 
 #include <proto/exec.h>
 #include <proto/unicam.h>
+#include <proto/utility.h>
 #include <proto/mathieeesingbas.h>
 
 #include <hardware/cia.h>
@@ -30,7 +31,7 @@ UWORD VC6_CalculateBytesPerRow(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD w
 
     if (0)
     {
-        bug("[VC4] CalculateBytesPerRow pitch %ld, format %lx\n", pitch, format);
+        bug("[VC6] CalculateBytesPerRow pitch %ld, format %lx\n", pitch, format);
     }
     
 
@@ -60,7 +61,7 @@ void VC6_SetDAC(REGARG(struct BoardInfo *b, "a0"), REGARG(RGBFTYPE format, "d7")
     struct ExecBase *SysBase = VC4Base->vc4_SysBase;
     
     if (0)
-        bug("[VC4] SetDAC\n");
+        bug("[VC6] SetDAC\n");
     // Used to set the color format of the video card's RAMDAC.
     // This needs no handling, since the PiStorm doesn't really have a RAMDAC or a video card chipset.
 }
@@ -83,7 +84,7 @@ void VC6_SetGC(REGARG(struct BoardInfo *b, "a0"), REGARG(struct ModeInfo *mode_i
     
     if (0)
     {
-        bug("[VC4] SetGC %ld x %ld x %ld\n", dim.width, dim.height, mode_info->Depth);
+        bug("[VC6] SetGC %ld x %ld x %ld\n", dim.width, dim.height, mode_info->Depth);
     }
 
     if (need_switch) {
@@ -137,7 +138,7 @@ UWORD VC6_SetSwitch(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD enabled, "d0
 
     if (1)
     {
-        bug("[VC4] SetSwitch %ld\n", enabled);
+        bug("[VC6] SetSwitch %ld\n", enabled);
     }
 
     if (VC4Base->vc4_Enabled != enabled) {
@@ -153,7 +154,7 @@ UWORD VC6_SetSwitch(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD enabled, "d0
         }
     }
     
-/* If switch mode is selected */
+    /* If switch mode is selected */
     if (VC4Base->vc4_SwitchMode != None)
     {
         UWORD en = enabled;
@@ -227,7 +228,7 @@ void VC6_SetPanning(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE *addr, "a1")
     int offset_only = 0;
 
     if (0) {
-        bug("[VC4] SetPanning %lx %ld %ld %ld %lx\n", addr, width, x_offset, y_offset, format);
+        bug("[VC6] SetPanning %lx %ld %ld %ld %lx\n", addr, width, x_offset, y_offset, format);
     }
 
     if (VC4Base->vc4_LastPanning.lp_Addr != NULL && 
@@ -236,7 +237,7 @@ void VC6_SetPanning(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE *addr, "a1")
     {
         if (addr == VC4Base->vc4_LastPanning.lp_Addr && x_offset == VC4Base->vc4_LastPanning.lp_X && y_offset == VC4Base->vc4_LastPanning.lp_Y) {
             if (0) {
-                bug("[VC4] same panning as before. Skipping now\n");
+                bug("[VC6] same panning as before. Skipping now\n");
             }
             return;
         }
@@ -302,8 +303,8 @@ void VC6_SetPanning(REGARG(struct BoardInfo *b, "a0"), REGARG(UBYTE *addr, "a1")
         VC4Base->vc4_OffsetY = offset_y;
 
         if (0)
-            bug("[VC4] Selected scale: %08lx (X: %08lx, Y: %08lx, 1/X: %08lx, 1/Y: %08lx)\n"
-                "[VC4] Scaled size: %ld x %ld, offset X %ld, offset Y %ld\n", scale, scale_x, scale_y, recip_x, recip_y,
+            bug("[VC6] Selected scale: %08lx (X: %08lx, Y: %08lx, 1/X: %08lx, 1/Y: %08lx)\n"
+                "[VC6] Scaled size: %ld x %ld, offset X %ld, offset Y %ld\n", scale, scale_x, scale_y, recip_x, recip_y,
                 calc_width, calc_height, offset_x, offset_y);
     }
 
@@ -603,7 +604,7 @@ void VC6_SetColorArray(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD start, "d
     
     if (0)
     {
-        bug("[VC4] SetColorArray %ld %ld\n", start, num);
+        bug("[VC6] SetColorArray %ld %ld\n", start, num);
     }
 
     int j = start + num;
@@ -623,7 +624,7 @@ APTR VC6_CalculateMemory(REGARG(struct BoardInfo *b, "a0"), REGARG(unsigned long
 
     if (0)
     {
-        bug("[VC4] CalculateMemory %lx %lx\n", addr, format);
+        bug("[VC6] CalculateMemory %lx %lx\n", addr, format);
     }
 
     return (APTR)addr;
@@ -660,7 +661,7 @@ ULONG VC6_GetCompatibleFormats(REGARG(struct BoardInfo *b, "a0"), REGARG(RGBFTYP
     struct ExecBase *SysBase = VC4Base->vc4_SysBase;
     if (0)
     {
-        bug("[VC4] GetCompatibleFormats %lx\n", format);
+        bug("[VC6] GetCompatibleFormats %lx\n", format);
     }
     //return BIP(RGBF_8BPP_CLUT) | BIP(RGBF_24BPP_RGB) | BIP(RGBF_24BPP_BGR) | BIP(RGBF_32BPP_ARGB) | BIP(RGBF_32BPP_ABGR) | BIP(RGBF_32BPP_RGBA) | BIP(RGBF_32BPP_BGRA);
     return 0xFFFFFFFF;
@@ -674,7 +675,7 @@ UWORD VC6_SetDisplay(REGARG(struct BoardInfo *b, "a0"), REGARG(UWORD enabled, "d
     
     if (1)
     {
-        bug("[VC4] SetDisplay %ld\n", enabled);
+        bug("[VC6] SetDisplay %ld\n", enabled);
     }
     if (enabled) {
         blank_screen(0, VC4Base);
@@ -693,7 +694,7 @@ LONG VC6_ResolvePixelClock(REGARG(struct BoardInfo *b, "a0"), REGARG(struct Mode
     
     if (0)
     {
-        bug("[VC4] ResolvePixelClock %lx %ld %lx\n", mode_info, pixel_clock, format);
+        bug("[VC6] ResolvePixelClock %lx %ld %lx\n", mode_info, pixel_clock, format);
     }
 
     ULONG clock = mode_info->HorTotal * mode_info->VerTotal * VC4Base->vc4_VertFreq;
@@ -1105,4 +1106,242 @@ void VC6_ConstructUnicamDL(struct VC4Base *VC4Base)
             compute_scaling_kernel((volatile uint32_t *)displist, 0xfc0, float_kernel_b, float_kernel_c);
         }
     }
+}
+
+void * VC6_CreateMemoryWindow(REGARG(struct BoardInfo *b, "a0"), REGARG(struct TagItem *tags, "a1"))
+{
+    struct VC6MemWindow *mw = NULL;
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+    struct Library *UtilityBase = b->UtilBase;
+    UWORD width;
+    UWORD height;
+    ULONG modeMemSize;
+    ULONG alignment;
+
+    bug("[VC6] CreateMemoryWindow()\n");
+
+    width = GetTagData(FA_SourceWidth, 0, tags);
+    height = GetTagData(FA_SourceHeight, 0, tags);
+
+    /* If no width or height was supplied, return NULL */
+    if (width == 0 || height == 0)
+        return NULL;
+
+    bug("[VC6] Source size: %ldx%ld\n", width, height);
+
+    mw = AllocMem(sizeof(struct VC6MemWindow), MEMF_ANY | MEMF_CLEAR);
+
+    if (mw == NULL)
+        return NULL;
+
+    mw->mw_SourceWidth = width;
+    mw->mw_SourceHeight = height;
+    mw->mw_ModeInfo = (struct ModeInfo *)GetTagData(FA_ModeInfo, NULL, tags);
+    mw->mw_Format = GetTagData(FA_Format, 0, tags);
+    mw->mw_ModeFormat = GetTagData(FA_ModeFormat, 0, tags);
+
+    modeMemSize = GetTagData(FA_ModeMemorySize, 0, tags);
+    alignment = GetTagData(FA_Alignment, 0, tags);
+
+    bug("[VC6] Format: %lx, Display Format: %lx\n", mw->mw_Format, mw->mw_ModeFormat);
+    bug("[VC6] ModeMemorySize: %ld, alignment: %ld\n", modeMemSize, alignment);
+    bug("[VC6] Display Depth: %ld\n", mw->mw_ModeInfo->Depth);
+
+    struct TagItem abmTags[] = {
+        { ABMA_RGBFormat,           mw->mw_Format }, 
+        { ABMA_Clear,               TRUE },
+        { ABMA_Displayable,         TRUE },
+        { ABMA_Visible,             TRUE },
+        { ABMA_Colors,              GetTagData(FA_Colors,              NULL,  tags) },
+        { ABMA_Colors32,            GetTagData(FA_Colors32,            NULL,  tags) },
+        { ABMA_ConstantBytesPerRow, GetTagData(FA_ConstantBytesPerRow, FALSE, tags) },
+        { ABMA_NoMemory,            GetTagData(FA_NoMemory,            FALSE, tags) },
+        { ABMA_RenderFunc,          GetTagData(FA_RenderFunc,          NULL,  tags) },
+        { ABMA_SaveFunc,            GetTagData(FA_SaveFunc,            NULL,  tags) },
+        { ABMA_UserData,            GetTagData(FA_UserData,            NULL,  tags) },
+        { ABMA_Alignment,           GetTagData(FA_Alignment,           32,    tags) },
+        { TAG_DONE, 0UL } 
+    };
+
+    mw->mw_BitMap = (struct BitMap *)b->AllocBitMap(b, width, height, abmTags);
+
+    if (mw->mw_BitMap) {
+        mw->mw_Memory = (APTR)b->GetBitMapAttr(b, mw->mw_BitMap, GBMA_MEMORY);
+        bug("[VC6] Raw data at %08lx\n", mw->mw_Memory);
+    }
+
+    return mw;
+}
+
+void VC6_DeleteMemoryWindow(REGARG(struct BoardInfo *b, "a0"), REGARG(struct VC6MemWindow *mw, "a1"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+    struct Library *UtilityBase = b->UtilBase;
+
+    bug("[VC6] DeleteMemoryWindow()\n");
+    
+    if (mw->mw_BitMap) {
+        b->FreeBitMap(b, mw->mw_BitMap, NULL);
+    }
+
+    if (mw->mw_DisplayList) {
+        FreeMem(mw->mw_DisplayList, mw->mw_DisplayListSize * sizeof(ULONG));
+    }
+
+    FreeMem(mw, sizeof(struct VC6MemWindow));
+}
+
+ULONG VC6_GetMemoryWindowAttrs(REGARG(struct BoardInfo *b, "a0"), REGARG(struct VC6MemWindow *mw, "a1"), REGARG(struct TagItem *tags, "a2"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+    struct Library *UtilityBase = b->UtilBase;
+
+    ULONG result = 0;
+
+    struct TagItem *tag;
+    struct TagItem *taglist = tags;
+    
+    while ((tag = NextTagItem(&taglist)))
+    {
+        ULONG *ptr = (ULONG *)&tag->ti_Data;
+
+        switch(tag->ti_Tag)
+        {
+            case FA_MinWidth:
+                *ptr = mw->mw_SourceWidth / 2;
+                break;
+            
+            case FA_MinHeight:
+                *ptr = mw->mw_SourceHeight / 2;
+                break;
+            
+            case FA_MaxWidth:
+                *ptr = 8191;
+                break;
+            
+            case FA_MaxHeight:
+                *ptr = 8191;
+                break;
+
+            case FA_Format:
+                *ptr = mw->mw_Format;
+                break;
+            
+            case FA_SourceWidth:
+                *ptr = mw->mw_SourceWidth;
+                break;
+            
+            case FA_SourceHeight:
+                *ptr = mw->mw_SourceHeight;
+                break;
+            
+            case FA_BitMap:
+                *ptr = (ULONG)mw->mw_BitMap;
+                break;
+            
+            case FA_ClipLeft:
+                *ptr = mw->mw_ClipLeft;
+                break;
+            
+            case FA_ClipTop:
+                *ptr = mw->mw_ClipTop;
+                break;
+            
+            case FA_ClipWidth:
+                *ptr = mw->mw_ClipWidth;
+                break;
+
+            case FA_ClipHeight:
+                *ptr = mw->mw_ClipHeight;
+                break;
+        }
+    }
+
+    return result;
+}
+
+void * VC6_CreateFeature(REGARG(struct BoardInfo *b, "a0"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a1"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+    APTR result = NULL;
+
+    bug("[VC6] CreateFeature(%ld)\n", type);
+
+    switch(type) {
+        case SFT_MEMORYWINDOW:
+            result = VC6_CreateMemoryWindow(b, tags);
+            break;
+        case SFT_VIDEOWINDOW:
+            break;
+        case SFT_VIDEOCAPTURE:
+            break;
+        case SFT_FLICKERFIXER:
+            break;
+    }
+
+    return result;
+}
+
+BOOL VC6_DeleteFeature(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR feature, "a1"), REGARG(ULONG type, "d0"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+
+    bug("[VC6] DeleteFeature(%ld)\n", type);
+
+    switch(type) {
+        case SFT_MEMORYWINDOW:
+            VC6_DeleteMemoryWindow(b, feature);
+            break;
+        case SFT_VIDEOWINDOW:
+            break;
+        case SFT_VIDEOCAPTURE:
+            break;
+        case SFT_FLICKERFIXER:
+            break;
+    }
+
+    return TRUE;
+}
+
+ULONG VC6_GetFeatureAttrs(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR featuredata, "a1"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a2"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+
+    ULONG result = 1;
+
+    switch(type) {
+        case SFT_MEMORYWINDOW:
+            result = VC6_GetMemoryWindowAttrs(b, featuredata, tags);
+            break;
+    }
+
+    return result;
+}
+
+ULONG VC6_SetFeatureAttrs(REGARG(struct BoardInfo *b, "a0"), REGARG(APTR featuredata, "a1"), REGARG(ULONG type, "d0"), REGARG(struct TagItem *tags, "a2"))
+{
+    struct VC4Base *VC4Base = (struct VC4Base *)b->CardBase;
+    struct ExecBase *SysBase = VC4Base->vc4_SysBase;
+
+    ULONG result = 0;
+
+    bug("[VC6] SetFeatureAttrs(%ld)\n", type);
+
+    struct TagItem *t = tags;
+
+    while(t->ti_Tag != TAG_DONE) {
+        bug("[VC6]  tag %08lx, data %08lx\n", t->ti_Tag, t->ti_Data);
+        if (t->ti_Tag == TAG_MORE) {
+            t = (struct TagItem *)t->ti_Data;
+        }
+        else t++;
+    }
+
+    return result;
 }
