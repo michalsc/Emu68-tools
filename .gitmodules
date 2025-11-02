@@ -1,0 +1,21 @@
+[submodule "VideoCore.card"]
+	path = VideoCore.card
+	url = https://github.com/michalsc/VideoCore.card.git
+[submodule "SetClockI2C"]
+	path = SetClockI2C
+	url = https://github.com/michalsc/SetClockI2C.git
+[submodule "i2c.library"]
+	path = i2c.library
+	url = https://github.com/michalsc/i2c.library.git
+[submodule "EmuControl"]
+	path = EmuControl
+	url = https://github.com/michalsc/EmuControl.git
+[submodule "devicetree.resource"]
+	path = devicetree.resource
+	url = https://github.com/michalsc/devicetree.resource.git
+[submodule "mailbox.resource"]
+	path = mailbox.resource
+	url = https://github.com/michalsc/mailbox.resource.git
+[submodule "unicam.resource"]
+	path = unicam.resource
+	url = https://github.com/michalsc/unicam.resource.git
