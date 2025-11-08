@@ -8,6 +8,7 @@ add_subdirectory(i2c.library)
 add_subdirectory(SetClockI2C)
 add_subdirectory(EmuControl)
 add_subdirectory(VideoCore.card)
+add_subdirectory(BinaryContribs)
 
 add_custom_target(Emu68-tools ALL
     DEPENDS
