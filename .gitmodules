@@ -19,3 +19,6 @@
 [submodule "unicam.resource"]
 	path = unicam.resource
 	url = https://github.com/michalsc/unicam.resource.git
+[submodule "Emu68Contribs"]
+	path = Emu68Contribs
+	url = https://github.com/flype44/Emu68Contribs.git
