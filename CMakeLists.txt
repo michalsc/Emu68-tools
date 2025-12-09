@@ -21,3 +21,6 @@ add_custom_target(Emu68-tools ALL
         VideoCore.card
         EmuControl
 )
+
+configure_file(Emu68-tools.readme.in Emu68-tools.readme @ONLY)
+install(FILES ${CMAKE_BINARY_DIR}/Emu68-tools.readme DESTINATION .)

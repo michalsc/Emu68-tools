@@ -1,0 +1,34 @@
+Short:        Emu68 tools and contributions
+Author:       Michal Schulz and Contributors
+Version:      @CMAKE_PROJECT_VERSION@
+Architecture: m68k-amigaos
+Type:         util/misc
+
+This is a collection of tools, the SDK, and drivers usable with Emu68 and
+PiStorm. It is an attempt to automate the build and packaging of the older
+Emu68 tools in a new way. Because of this, some components may still be 
+missing and will appear in future releases.
+
+The archive currently includes the following items:
+
+Authored by Michal Schulz:
+- EmuControl
+- VideoCore.card
+- SetClockI2C
+
+Contriutions by Philippe CARPENTIER:
+- Emu68Reset
+- Emu68Info
+- Emu68EDID
+- WaitUntilConnected
+- ListDeviceTree
+
+Apart from the tools listed above, the archive contains the SDK (headers
+and SFD files) for resources and/or libraries used in combination with
+Emu68:
+- devicetree.resource
+- mailbox.resource
+- unicam.resource
+
+The source code of this package can be found on GitHub:
+https://github.com/michalsc/Emu68-tools
