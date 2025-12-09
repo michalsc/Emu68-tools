@@ -1,6 +1,6 @@
 Short:        Emu68 tools and contributions
 Author:       Michal Schulz and Contributors
-Version:      @CMAKE_PROJECT_VERSION@
+Version:      @PROJECT_VERSION_MAJOR@.@PROJECT_VERSION_MINOR@
 Architecture: m68k-amigaos
 Type:         util/misc
 
