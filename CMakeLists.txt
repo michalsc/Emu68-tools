@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14.0)
-project(Emu68-tools VERSION 1.0.0)
+project(Emu68-tools VERSION 1.0.1)
 
 add_subdirectory(devicetree.resource)
 add_subdirectory(mailbox.resource)
