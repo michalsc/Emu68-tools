@@ -22,3 +22,6 @@
 [submodule "Emu68Contribs"]
 	path = Emu68Contribs
 	url = https://github.com/flype44/Emu68Contribs.git
+[submodule "WiFiPi.device"]
+	path = WiFiPi.device
+	url = https://github.com/michalsc/WiFiPi.device.git

@@ -15,6 +15,7 @@ Authored by Michal Schulz:
 - EmuControl
 - VideoCore.card
 - SetClockI2C
+- WiFiPi.device
 
 Contriutions by Philippe CARPENTIER:
 - Emu68Reset
