@@ -25,3 +25,7 @@
 [submodule "WiFiPi.device"]
 	path = WiFiPi.device
 	url = https://github.com/michalsc/WiFiPi.device.git
+[submodule "gic400.library"]
+	path = gic400.library
+	url = https://github.com/michalsc/gic400.library.git
+	branch = origin/emu68rom

@@ -30,6 +30,7 @@ Emu68:
 - devicetree.resource
 - mailbox.resource
 - unicam.resource
+- gic400.library (Contribution by Rondoval)
 
 The source code of this package can be found on GitHub:
 https://github.com/michalsc/Emu68-tools
